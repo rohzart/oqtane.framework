@@ -42,7 +42,6 @@ namespace Oqtane.Repository
         {
             using var db = _dbContextFactory.CreateDbContext();
             var folders = db.Folder
-                .Include(i => i.StorageLocation)
                 .Where(item => item.SiteId == siteId && (!item.Path.StartsWith(Constants.UserFolderPath) || item.Path == Constants.UserFolderPath || item.Path.StartsWith($"{Constants.UserFolderPath}{userId}/")))
                 .Select(item => new Folder
                 {
@@ -56,9 +55,7 @@ namespace Oqtane.Repository
                     Capacity = item.Capacity,
                     IsSystem = item.IsSystem,
                     CacheControl = item.CacheControl,
-                    StorageLocationId = item.StorageLocationId,
-                    StorageLocation = item.StorageLocation,
-                    MappedPath = item.MappedPath,
+                    StorageProviderType = item.StorageProviderType,
                     CreatedBy = item.CreatedBy,
                     CreatedOn = item.CreatedOn,
                     ModifiedBy = item.ModifiedBy,
@@ -134,7 +131,6 @@ namespace Oqtane.Repository
         {
             using var db = _dbContextFactory.CreateDbContext();
             //build the mapped path
-            folder.MappedPath = BuildMappedPath(folder);
             db.Folder.Add(folder);
             db.SaveChanges();
             _permissions.UpdatePermissions(folder.SiteId, EntityNames.Folder, folder.FolderId, folder.PermissionList);
@@ -145,7 +141,6 @@ namespace Oqtane.Repository
         {
             using var db = _dbContextFactory.CreateDbContext();
             //build the mapped path
-            folder.MappedPath = BuildMappedPath(folder);
             db.Entry(folder).State = EntityState.Modified;
             db.SaveChanges();
             _permissions.UpdatePermissions(folder.SiteId, EntityNames.Folder, folder.FolderId, folder.PermissionList);
@@ -162,7 +157,6 @@ namespace Oqtane.Repository
             // note that tracking parameter is ignored as query uses a projection
             using var db = _dbContextFactory.CreateDbContext();
             return db.Folder
-                .Include(i => i.StorageLocation)
                 .Where(item => item.FolderId == folderId)
                 .Select(item => new Folder
                 {
@@ -176,9 +170,7 @@ namespace Oqtane.Repository
                     Capacity = item.Capacity,
                     IsSystem = item.IsSystem,
                     CacheControl = item.CacheControl,
-                    StorageLocationId = item.StorageLocationId,
-                    StorageLocation = item.StorageLocation,
-                    MappedPath = item.MappedPath,
+                    StorageProviderType = item.StorageProviderType,
                     CreatedBy = item.CreatedBy,
                     CreatedOn = item.CreatedOn,
                     ModifiedBy = item.ModifiedBy,
@@ -212,7 +204,6 @@ namespace Oqtane.Repository
             // note that tracking parameter is ignored as query uses a projection
             using var db = _dbContextFactory.CreateDbContext();
             return db.Folder
-                .Include(i => i.StorageLocation)
                 .Where(item => item.SiteId == siteId && item.Path == path)
                 .Select(item => new Folder
                 {
@@ -226,9 +217,7 @@ namespace Oqtane.Repository
                     Capacity = item.Capacity,
                     IsSystem = item.IsSystem,
                     CacheControl = item.CacheControl,
-                    StorageLocationId = item.StorageLocationId,
-                    StorageLocation = item.StorageLocation,
-                    MappedPath = item.MappedPath,
+                    StorageProviderType = item.StorageProviderType,
                     CreatedBy = item.CreatedBy,
                     CreatedOn = item.CreatedOn,
                     ModifiedBy = item.ModifiedBy,
@@ -278,7 +267,7 @@ namespace Oqtane.Repository
                         Capacity = folder.Capacity,
                         CacheControl = folder.CacheControl,
                         IsSystem = true,
-                        StorageLocationId = folder.StorageLocationId,
+                        StorageProviderType = folder.StorageProviderType,
                         PermissionList = new List<Permission>
                         {
                             new Permission(PermissionNames.Browse, userId, true),
@@ -299,22 +288,6 @@ namespace Oqtane.Repository
             _permissions.DeletePermissions(folder.SiteId, EntityNames.Folder, folderId);
             db.Folder.Remove(folder);
             db.SaveChanges();
-        }
-
-        private string BuildMappedPath(Folder folder)
-        {
-            var path = string.Empty;
-            if (folder.ParentId != null)
-            {
-                var parentFolder = GetFolder(folder.ParentId.Value);
-                if (parentFolder != null)
-                {
-                    var folderName = folder.Path.Split('/', StringSplitOptions.RemoveEmptyEntries).Last();
-                    path = parentFolder.StorageLocationId != folder.StorageLocationId ? string.Empty : $"{parentFolder.MappedPath}{folderName}/";
-                }
-            }
-
-            return path;
         }
     }
 }

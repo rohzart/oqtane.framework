@@ -37,7 +37,10 @@ namespace Oqtane.Models
         /// </summary>
         public string Path { get; set; }
 
-        public string MappedPath { get; set; }
+        /// <summary>
+        /// The folder storage provider.
+        /// </summary>
+        public string StorageProviderType { get; set; }
 
         /// <summary>
         /// Sorting order of the folder ** not used as folders are sorted in alphabetical order **
@@ -65,11 +68,6 @@ namespace Oqtane.Models
         public string CacheControl { get; set; }
 
         /// <summary>
-        /// Reference to the <see cref="StorageLocation"/>.
-        /// </summary>
-        public int? StorageLocationId { get; set; }
-
-        /// <summary>
         /// TODO: todoc what would this contain?
         /// </summary>
         [NotMapped]
@@ -87,8 +85,6 @@ namespace Oqtane.Models
         /// </summary>
         [NotMapped]
         public bool HasChildren { get; set; }
-
-        public StorageLocation StorageLocation { get; set; }
         
         /// <summary>
         /// Indicates if subfolder permissions should be updated to be consistent with parent folder
@@ -117,9 +113,6 @@ namespace Oqtane.Models
         [NotMapped]
         [JsonIgnore] // exclude from API payload
         public bool? IsDeleted { get; set; }
-
-        [Obsolete("The Type property is deprecated in 10.3.0, replaced by using storage provider.")]
-        public string Type { get; set; }
 
         #endregion
     }
